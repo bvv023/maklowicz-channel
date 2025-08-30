@@ -89,12 +89,21 @@ with open(playlist_file, "w", encoding="utf-8") as f:
 print(f"[INFO] Плейлист {playlist_file} оновлено. Нових відео додано: {len(new_links)}")
 
 # -----------------------------
-# Автоматичний пуш у GitHub
+# Автоматичний пуш у GitHub (тільки якщо є зміни)
 # -----------------------------
 try:
     subprocess.run(["git", "add", "maklowicz_youtube.m3u"], cwd=folder, check=True)
-    subprocess.run(["git", "commit", "-m", "Update Maklowicz playlist"], cwd=folder, check=True)
-    subprocess.run(["git", "push"], cwd=folder, check=True)
-    print("[INFO] Плейлист успішно запушений у GitHub")
+    
+    # перевіряємо, чи є зміни
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"], cwd=folder
+    )
+    if result.returncode != 0:  # є зміни
+        subprocess.run(["git", "commit", "-m", "Update Maklowicz playlist"], cwd=folder, check=True)
+        subprocess.run(["git", "push"], cwd=folder, check=True)
+        print("[INFO] Плейлист успішно запушений у GitHub")
+    else:
+        print("[INFO] Змін немає, пуш не потрібен")
+        
 except subprocess.CalledProcessError as e:
     print(f"[ERROR] Помилка при пуші у GitHub: {e}")
